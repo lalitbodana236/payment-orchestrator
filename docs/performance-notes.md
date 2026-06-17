@@ -1,4 +1,4 @@
-# Performance Notes
+﻿# Performance Notes
 
 ## Captured metrics
 
@@ -23,4 +23,5 @@
 
 - The service already exposes Prometheus-compatible metrics through Spring Boot Actuator.
 - The metrics are useful for latency tracking, retry analysis, and provider health monitoring.
-- For a stronger assessment submission, you could add benchmark results from a representative load test and include the observed p95 latency, retry rate, and error rate.
+- For a stronger portfolio project, you could add benchmark results from a representative load test and include the observed p95 latency, retry rate, and error rate.
+

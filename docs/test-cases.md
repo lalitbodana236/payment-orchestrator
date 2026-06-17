@@ -1,6 +1,6 @@
-# Test Cases
+﻿# Test Cases
 
-This document classifies the assessment scenarios into sanity, regression, and integration coverage. It includes both positive and negative cases.
+This document classifies the project scenarios into sanity, regression, and integration coverage. It includes both positive and negative cases.
 
 ## Sanity
 

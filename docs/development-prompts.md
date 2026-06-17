@@ -1,6 +1,6 @@
-# Development Prompts
+﻿# Development Prompts
 
-This file documents the prompts used while shaping the implementation in a vibe-coding style.
+This file documents the prompts used while shaping the implementation in a product-focused style.
 
 ## Prompt examples
 
@@ -12,7 +12,8 @@ This file documents the prompts used while shaping the implementation in a vibe-
 
 ## Prompting approach
 
-- Start from the assessment requirements and translate them into concrete layers.
+- Start from the product requirements and translate them into concrete layers.
 - Keep responsibilities separated so each class stays easy to test.
 - Favor explicit state transitions over hidden behavior.
 - Preserve idempotency and failure handling as first-class concerns.
+

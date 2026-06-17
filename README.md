@@ -1,6 +1,6 @@
-# Payment Orchestrator
+﻿# Payment Orchestrator
 
-Backend assessment project for a simplified payment orchestration flow inspired by Yuno.
+Portfolio-ready payment orchestration project that demonstrates routing, resilience, idempotency, observability, and scalable backend design in Spring Boot.
 
 ## Overview
 
@@ -168,13 +168,18 @@ Same response schema as create, wrapped in the API response envelope.
 
 ## Test Strategy
 
-See `docs/test-cases.md` for the full scenario list and classification.
+See `docs/test-cases.md` for the full scenario list and coverage breakdown.
 The repository also includes sample unit tests for routing, mapping, hashing, and payment route selection.
 
 ## Prompt Log
 
-See `docs/development-prompts.md` for the development prompt record.
+See `docs/development-prompts.md` for the development prompt record and design intent.
 
 ## Performance Notes
 
 See `docs/performance-notes.md` for the metrics and tuning considerations.
+
+## Project Document
+
+See `docs/project-document.md` for the class-by-class explanation, request flow, concurrency handling, and scaling discussion you can use in interviews.
+
