@@ -3,7 +3,6 @@ const state = {
   lastPaymentReference: localStorage.getItem("paymentOrchestratorLastPaymentReference") || "",
   recentPaymentReferences: JSON.parse(localStorage.getItem("paymentOrchestratorRecentPaymentReferences") || "[]"),
   sandboxPaymentReference: localStorage.getItem("paymentOrchestratorSandboxPaymentReference") || "",
-  sandboxCheckoutUrl: localStorage.getItem("paymentOrchestratorSandboxCheckoutUrl") || "",
 };
 
 const elements = {
@@ -44,7 +43,6 @@ function saveState() {
   localStorage.setItem("paymentOrchestratorLastPaymentReference", state.lastPaymentReference);
   localStorage.setItem("paymentOrchestratorRecentPaymentReferences", JSON.stringify(state.recentPaymentReferences));
   localStorage.setItem("paymentOrchestratorSandboxPaymentReference", state.sandboxPaymentReference);
-  localStorage.setItem("paymentOrchestratorSandboxCheckoutUrl", state.sandboxCheckoutUrl);
 }
 
 function normalizeBaseUrl(value) {
@@ -130,9 +128,6 @@ function updateSandboxState(payload) {
     if (data.paymentReference) {
       state.sandboxPaymentReference = data.paymentReference;
     }
-    if (data.checkoutUrl) {
-      state.sandboxCheckoutUrl = data.checkoutUrl;
-    }
     saveState();
     renderSandboxUi();
   }
@@ -191,14 +186,6 @@ async function sendCreatePayment(idempotencyKey) {
     body: JSON.stringify(paymentBody()),
   });
 }
-
-async function sendCreateSandboxPayment() {
-  return fetchJson("/api/v1/sandbox/payments", {
-    method: "POST",
-    body: JSON.stringify(paymentBody()),
-  });
-}
-
 async function sendGetPayment() {
   const paymentReference =
     elements.recentPaymentReference.value.trim() ||
@@ -330,9 +317,9 @@ function renderSandboxUi() {
     ? `Open ${sandboxReference || "sandbox payment"} checkout`
     : "Create a sandbox payment first";
 
-  elements.sandboxStatusBadge.textContent = state.sandboxPaymentReference
-    ? `Sandbox payment created: ${state.sandboxPaymentReference}`
-    : "No sandbox payment yet";
+  elements.sandboxStatusBadge.textContent = sandboxReference
+    ? `Sandbox payment selected: ${sandboxReference}`
+    : "No sandbox payment selected";
 
   elements.sandboxCheckoutUrl.textContent = hasSandboxCheckout
     ? sandboxCheckoutUrl
@@ -379,13 +366,21 @@ function wireUi() {
 
   elements.createSandboxPayment.addEventListener("click", async () => {
     try {
-      setStatus("Creating sandbox payment...");
-      const response = await sendCreateSandboxPayment();
-      updateSandboxState(response);
-      setResponse(response);
-      setStatus(`Sandbox payment created: ${state.sandboxPaymentReference}`);
+      const selectedReference = getSelectedPaymentReference();
+      if (!selectedReference) {
+        throw new Error("Select a payment reference first.");
+      }
+      state.sandboxPaymentReference = selectedReference;
+      saveState();
+      renderSandboxUi();
+      setResponse({
+        message: "Sandbox checkout prepared from selected payment reference.",
+        paymentReference: selectedReference,
+        checkoutUrl: `${getBaseUrlIfSet()}/api/v1/sandbox/checkout/${encodeURIComponent(selectedReference)}`,
+      });
+      setStatus(`Sandbox checkout prepared for ${selectedReference}.`);
     } catch (error) {
-      setStatus(error.message || "Sandbox payment creation failed.");
+      setStatus(error.message || "Sandbox checkout preparation failed.");
       setResponse(error.body || { error: error.message });
     }
   });
@@ -393,7 +388,7 @@ function wireUi() {
   elements.openSandboxCheckout.addEventListener("click", () => {
     const sandboxReference = getSandboxReference();
     if (!sandboxReference) {
-      setStatus("Create a sandbox payment first.");
+      setStatus("Select a payment reference first.");
       return;
     }
     let sandboxCheckoutUrl;
