@@ -14,11 +14,13 @@ import com.lalit.paymentorchestrator.routing.RoutingStrategy;
 import com.lalit.paymentorchestrator.util.PaymentReferenceGenerator;
 import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.Test;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.retry.support.RetryTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,14 +37,17 @@ class SandboxPaymentServiceTest {
         RoutingStrategy routingStrategy = mock(RoutingStrategy.class);
         PaymentReferenceGenerator referenceGenerator = mock(PaymentReferenceGenerator.class);
         PaymentMetricsRecorder metricsRecorder = mock(PaymentMetricsRecorder.class);
+        SandboxAutoFinalizeService autoFinalizeService = mock(SandboxAutoFinalizeService.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
         Timer.Sample timerSample = mock(Timer.Sample.class);
 
         when(metricsRecorder.startSample()).thenReturn(timerSample);
         when(referenceGenerator.nextReference()).thenReturn("pay_123");
         when(routingStrategy.route(PaymentMethod.UPI)).thenReturn(new PaymentRoute(PaymentProviderType.PROVIDER_B, java.util.List.of()));
         when(paymentRepository.save(any(PaymentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenReturn(mock(ScheduledFuture.class));
 
-        SandboxPaymentService service = new SandboxPaymentService(paymentRepository, routingStrategy, referenceGenerator, metricsRecorder);
+        SandboxPaymentService service = new SandboxPaymentService(paymentRepository, routingStrategy, referenceGenerator, metricsRecorder, autoFinalizeService, taskScheduler, 3000L);
 
         PaymentEntity paymentEntity = service.createSandboxPayment(new PaymentRequest(new BigDecimal("120.50"), "USD", PaymentMethod.UPI));
 
@@ -58,6 +63,8 @@ class SandboxPaymentServiceTest {
         RoutingStrategy routingStrategy = mock(RoutingStrategy.class);
         PaymentReferenceGenerator referenceGenerator = mock(PaymentReferenceGenerator.class);
         PaymentMetricsRecorder metricsRecorder = mock(PaymentMetricsRecorder.class);
+        SandboxAutoFinalizeService autoFinalizeService = mock(SandboxAutoFinalizeService.class);
+        TaskScheduler taskScheduler = mock(TaskScheduler.class);
         Timer.Sample timerSample = mock(Timer.Sample.class);
 
         when(metricsRecorder.startSample()).thenReturn(timerSample);
@@ -75,7 +82,7 @@ class SandboxPaymentServiceTest {
         when(paymentRepository.findByPaymentReference("pay_123")).thenReturn(Optional.of(paymentEntity));
         when(paymentRepository.save(any(PaymentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        SandboxPaymentService service = new SandboxPaymentService(paymentRepository, routingStrategy, referenceGenerator, metricsRecorder);
+        SandboxPaymentService service = new SandboxPaymentService(paymentRepository, routingStrategy, referenceGenerator, metricsRecorder, autoFinalizeService, taskScheduler, 3000L);
 
         PaymentEntity completed = service.completeSandboxPayment("pay_123", new SandboxWebhookRequest(SandboxPaymentOutcome.SUCCESS, null));
 
@@ -85,7 +92,14 @@ class SandboxPaymentServiceTest {
 
     @Test
     void renderCheckoutPageShouldContainPaymentDetails() {
-        SandboxPaymentService service = new SandboxPaymentService(mock(PaymentRepository.class), mock(RoutingStrategy.class), mock(PaymentReferenceGenerator.class), mock(PaymentMetricsRecorder.class));
+        SandboxPaymentService service = new SandboxPaymentService(
+                mock(PaymentRepository.class),
+                mock(RoutingStrategy.class),
+                mock(PaymentReferenceGenerator.class),
+                mock(PaymentMetricsRecorder.class),
+                mock(SandboxAutoFinalizeService.class),
+                mock(TaskScheduler.class),
+                3000L);
         PaymentEntity paymentEntity = PaymentEntity.builder()
                 .paymentReference("pay_123")
                 .amount(new BigDecimal("120.50"))

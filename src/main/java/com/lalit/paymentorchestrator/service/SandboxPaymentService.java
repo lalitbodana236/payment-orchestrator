@@ -11,7 +11,12 @@ import com.lalit.paymentorchestrator.repository.PaymentRepository;
 import com.lalit.paymentorchestrator.routing.RoutingStrategy;
 import com.lalit.paymentorchestrator.util.PaymentReferenceGenerator;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.time.Instant;
 
 @Service
 public class SandboxPaymentService {
@@ -20,15 +25,24 @@ public class SandboxPaymentService {
     private final RoutingStrategy routingStrategy;
     private final PaymentReferenceGenerator paymentReferenceGenerator;
     private final PaymentMetricsRecorder metricsRecorder;
+    private final SandboxAutoFinalizeService autoFinalizeService;
+    private final TaskScheduler taskScheduler;
+    private final long autoFinalizeDelayMs;
 
     public SandboxPaymentService(PaymentRepository paymentRepository,
                                  RoutingStrategy routingStrategy,
                                  PaymentReferenceGenerator paymentReferenceGenerator,
-                                 PaymentMetricsRecorder metricsRecorder) {
+                                 PaymentMetricsRecorder metricsRecorder,
+                                 SandboxAutoFinalizeService autoFinalizeService,
+                                 TaskScheduler taskScheduler,
+                                 @org.springframework.beans.factory.annotation.Value("${sandbox.payment.auto-finalize-delay-ms:3000}") long autoFinalizeDelayMs) {
         this.paymentRepository = paymentRepository;
         this.routingStrategy = routingStrategy;
         this.paymentReferenceGenerator = paymentReferenceGenerator;
         this.metricsRecorder = metricsRecorder;
+        this.autoFinalizeService = autoFinalizeService;
+        this.taskScheduler = taskScheduler;
+        this.autoFinalizeDelayMs = autoFinalizeDelayMs;
     }
 
     @Transactional
@@ -45,6 +59,7 @@ public class SandboxPaymentService {
                     .retryCount(0)
                     .build();
             PaymentEntity saved = paymentRepository.save(paymentEntity);
+            scheduleAutoFinalize(saved.getPaymentReference());
             metricsRecorder.recordApiLatency(sample, "sandbox_create_payment", "success");
             metricsRecorder.incrementPaymentOutcome("sandbox_pending", saved.getProvider());
             return saved;
@@ -160,5 +175,21 @@ public class SandboxPaymentService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
+    }
+
+    private void scheduleAutoFinalize(String paymentReference) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            taskScheduler.schedule(() -> autoFinalizeService.autoFinalize(paymentReference),
+                    Instant.now().plusMillis(autoFinalizeDelayMs));
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                taskScheduler.schedule(() -> autoFinalizeService.autoFinalize(paymentReference),
+                        Instant.now().plusMillis(autoFinalizeDelayMs));
+            }
+        });
     }
 }
