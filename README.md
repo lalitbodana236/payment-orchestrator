@@ -251,5 +251,5 @@ This project is a fintech backend that focuses on correctness under retries, dup
 - Project document: `docs/project-document.html`
 - Markdown source: `docs/project-document.md`
 
-The workflow publishes the `docs/` folder to the `gh-pages` branch.
+The workflow publishes the `docs/` folder to the `gh-pages` branch on every push to `main` or when run manually.
 In repository settings, set **Pages → Deploy from a branch → `gh-pages` / root**.
