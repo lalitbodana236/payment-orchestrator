@@ -1,167 +1,225 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Payment Orchestrator | Spring Boot Fintech Backend</title>
-  <meta name="description" content="A portfolio-ready payment orchestration backend with idempotency, routing, retries, Redis, MySQL, Prometheus, and Grafana." />
-  <link rel="stylesheet" href="./assets/site.css" />
-</head>
-<body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">
-        <div class="brand-badge">PO</div>
-        <div>
-          <div>Payment Orchestrator</div>
-          <small style="color: var(--muted);">Fintech backend showcase</small>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment Orchestrator | Spring Boot Fintech Backend</title>
+    <meta
+      name="description"
+      content="A portfolio-ready payment orchestration backend with idempotency, routing, retries, Redis, MySQL, Prometheus, and Grafana." />
+    <link rel="stylesheet" href="./assets/site.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="brand-badge">PO</div>
+          <div>
+            <div>Payment Orchestrator</div>
+            <small style="color: var(--muted)">Fintech backend showcase</small>
+          </div>
         </div>
+        <nav class="nav">
+          <a href="#features">Features</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#document">Project Document</a>
+          <a href="#run">Run</a>
+        </nav>
       </div>
-      <nav class="nav">
-        <a href="#features">Features</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#document">Project Document</a>
-        <a href="#run">Run</a>
-      </nav>
-    </div>
-  </header>
+    </header>
 
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-card">
-          <div class="eyebrow">Portfolio-ready • Spring Boot • Fintech</div>
-          <h1>Payment orchestration built for reliability, scale, and interview depth.</h1>
-          <p class="lead">
-            This project simulates a production-style payment backend: it routes payments to the right provider,
-            enforces idempotency, handles retries and failover, persists state in MySQL, uses Redis for hot-path
-            deduplication, and exposes Prometheus/Grafana observability.
-          </p>
-          <div class="cta-row">
-            <a class="btn primary" href="./project-document.html">Read Project Document</a>
-            <a class="btn" href="https://github.com/<your-username>/payment-orchestrator" target="_blank" rel="noreferrer">GitHub Repo</a>
-            <a class="btn" href="#run">How to Run</a>
-          </div>
-        </div>
-        <aside class="side-card metrics">
-          <div class="metric">
-            <span style="color: var(--muted);">What it demonstrates</span>
-            <strong>Idempotency, retries, failover, observability, Docker</strong>
-          </div>
-          <div class="metric">
-            <span style="color: var(--muted);">Stack</span>
-            <strong>Java 21, Spring Boot, Redis, MySQL, Prometheus, Grafana</strong>
-          </div>
-          <div class="metric">
-            <span style="color: var(--muted);">Best for</span>
-            <strong>Backend, fintech, and system design interviews</strong>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section" id="features">
-      <div class="container section-grid">
-        <div class="section-card span-7">
-          <h2>Why this project stands out</h2>
-          <div class="pill-row">
-            <span class="pill">Provider routing</span>
-            <span class="pill">Automatic failover</span>
-            <span class="pill">Idempotency keys</span>
-            <span class="pill">Redis locks</span>
-            <span class="pill">MySQL persistence</span>
-            <span class="pill">Metrics & tracing</span>
-            <span class="pill">Swagger UI</span>
-          </div>
-          <ul class="list" style="margin-top: 18px;">
-            <li>Routes `DEBIT_CARD`, `CREDIT_CARD`, and `NET_BANKING` to the primary card provider.</li>
-            <li>Routes `UPI` to the UPI provider first, then automatically fails over if needed.</li>
-            <li>Prevents duplicate payment execution with idempotency locks and cached responses.</li>
-            <li>Exposes custom app metrics plus Prometheus and Grafana dashboards for visibility.</li>
-          </ul>
-        </div>
-        <div class="section-card span-5">
-          <h2>Interview pitch</h2>
-          <p style="color: var(--muted); margin-top: 0;">
-            “I built a Spring Boot payment orchestration service that safely handles payment retries, duplicate requests,
-            provider failures, and concurrent traffic. The backend stays stateless so it can scale horizontally, while
-            Redis and MySQL split hot-path deduplication from durable persistence.”
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="architecture">
-      <div class="container section-grid">
-        <div class="section-card span-6">
-          <h2>Architecture</h2>
-          <div class="code">Client → Controller → Orchestration Service → Routing Strategy → Provider Executor → Provider Connector → MySQL / Redis</div>
-        </div>
-        <div class="section-card span-6">
-          <h2>What happens on a request</h2>
-          <div class="grid-two">
-            <div class="step">
-              <h3>1. Validate</h3>
-              <p>Checks input, correlation ID, and idempotency key.</p>
-            </div>
-            <div class="step">
-              <h3>2. Route</h3>
-              <p>Picks the provider based on payment method.</p>
-            </div>
-            <div class="step">
-              <h3>3. Execute</h3>
-              <p>Retries transient failures and handles timeouts.</p>
-            </div>
-            <div class="step">
-              <h3>4. Persist</h3>
-              <p>Saves final payment status and caches the response.</p>
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-card">
+            <div class="eyebrow">Portfolio-ready • Spring Boot • Fintech</div>
+            <h1>
+              Payment orchestration built for reliability, scale, and interview
+              depth.
+            </h1>
+            <p class="lead">
+              This project simulates a production-style payment backend: it
+              routes payments to the right provider, enforces idempotency,
+              handles retries and failover, persists state in MySQL, uses Redis
+              for hot-path deduplication, and exposes Prometheus/Grafana
+              observability.
+            </p>
+            <div class="cta-row">
+              <a class="btn primary" href="./project-document.html"
+                >Read Project Document</a
+              >
+              <a
+                class="btn"
+                href="https://github.com/<your-username>/payment-orchestrator"
+                target="_blank"
+                rel="noreferrer"
+                >GitHub Repo</a
+              >
+              <a class="btn" href="#run">How to Run</a>
             </div>
           </div>
+          <aside class="side-card metrics">
+            <div class="metric">
+              <span style="color: var(--muted)">What it demonstrates</span>
+              <strong
+                >Idempotency, retries, failover, observability, Docker</strong
+              >
+            </div>
+            <div class="metric">
+              <span style="color: var(--muted)">Stack</span>
+              <strong
+                >Java 21, Spring Boot, Redis, MySQL, Prometheus, Grafana</strong
+              >
+            </div>
+            <div class="metric">
+              <span style="color: var(--muted)">Best for</span>
+              <strong>Backend, fintech, and system design interviews</strong>
+            </div>
+          </aside>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="section" id="document">
-      <div class="container section-grid">
-        <div class="section-card span-12">
-          <h2>Project document</h2>
-          <p style="color: var(--muted);">
-            The detailed interview guide lives in the project document below. It explains each class, the flow, concurrency handling,
-            scaling approach, and strong answers you can use in interviews.
-          </p>
-          <div class="cta-row">
-            <a class="btn primary" href="./project-document.html">Open Project Document</a>
-            <a class="btn" href="./project-document.md" target="_blank" rel="noreferrer">Markdown Version</a>
+      <section class="section" id="features">
+        <div class="container section-grid">
+          <div class="section-card span-7">
+            <h2>Why this project stands out</h2>
+            <div class="pill-row">
+              <span class="pill">Provider routing</span>
+              <span class="pill">Automatic failover</span>
+              <span class="pill">Idempotency keys</span>
+              <span class="pill">Redis locks</span>
+              <span class="pill">MySQL persistence</span>
+              <span class="pill">Metrics & tracing</span>
+              <span class="pill">Swagger UI</span>
+            </div>
+            <ul class="list" style="margin-top: 18px">
+              <li>
+                Routes `DEBIT_CARD`, `CREDIT_CARD`, and `NET_BANKING` to the
+                primary card provider.
+              </li>
+              <li>
+                Routes `UPI` to the UPI provider first, then automatically fails
+                over if needed.
+              </li>
+              <li>
+                Prevents duplicate payment execution with idempotency locks and
+                cached responses.
+              </li>
+              <li>
+                Exposes custom app metrics plus Prometheus and Grafana
+                dashboards for visibility.
+              </li>
+            </ul>
+          </div>
+          <div class="section-card span-5">
+            <h2>Interview pitch</h2>
+            <p style="color: var(--muted); margin-top: 0">
+              “I built a Spring Boot payment orchestration service that safely
+              handles payment retries, duplicate requests, provider failures,
+              and concurrent traffic. The backend stays stateless so it can
+              scale horizontally, while Redis and MySQL split hot-path
+              deduplication from durable persistence.”
+            </p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="section" id="run">
-      <div class="container section-grid">
-        <div class="section-card span-6">
-          <h2>Run locally</h2>
-          <div class="code">mvn spring-boot:run</div>
-          <p style="color: var(--muted);">App: <code>http://localhost:10005</code></p>
+      <section class="section" id="architecture">
+        <div class="container section-grid">
+          <div class="section-card span-6">
+            <h2>Architecture</h2>
+            <div class="code">
+              Client → Controller → Orchestration Service → Routing Strategy →
+              Provider Executor → Provider Connector → MySQL / Redis
+            </div>
+          </div>
+          <div class="section-card span-6">
+            <h2>What happens on a request</h2>
+            <div class="grid-two">
+              <div class="step">
+                <h3>1. Validate</h3>
+                <p>Checks input, correlation ID, and idempotency key.</p>
+              </div>
+              <div class="step">
+                <h3>2. Route</h3>
+                <p>Picks the provider based on payment method.</p>
+              </div>
+              <div class="step">
+                <h3>3. Execute</h3>
+                <p>Retries transient failures and handles timeouts.</p>
+              </div>
+              <div class="step">
+                <h3>4. Persist</h3>
+                <p>Saves final payment status and caches the response.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="section-card span-6">
-          <h2>Run with Docker</h2>
-          <div class="code">docker compose up --build</div>
-          <p style="color: var(--muted);">Grafana: <code>http://localhost:3000</code> • Prometheus: <code>http://localhost:9090</code></p>
-        </div>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-links">
-        <a href="./project-document.html">Project Document</a>
-        <a href="./project-document.md">Markdown Doc</a>
-        <a href="https://github.com/<your-username>/payment-orchestrator" target="_blank" rel="noreferrer">GitHub Repo</a>
+      <section class="section" id="document">
+        <div class="container section-grid">
+          <div class="section-card span-12">
+            <h2>Project document</h2>
+            <p style="color: var(--muted)">
+              The detailed interview guide lives in the project document below.
+              It explains each class, the flow, concurrency handling, scaling
+              approach, and strong answers you can use in interviews.
+            </p>
+            <div class="cta-row">
+              <a class="btn primary" href="./project-document.html"
+                >Open Project Document</a
+              >
+              <a
+                class="btn"
+                href="./project-document.md"
+                target="_blank"
+                rel="noreferrer"
+                >Markdown Version</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="run">
+        <div class="container section-grid">
+          <div class="section-card span-6">
+            <h2>Run locally</h2>
+            <div class="code">mvn spring-boot:run</div>
+            <p style="color: var(--muted)">
+              App: <code>http://localhost:10005</code>
+            </p>
+          </div>
+          <div class="section-card span-6">
+            <h2>Run with Docker</h2>
+            <div class="code">docker compose up --build</div>
+            <p style="color: var(--muted)">
+              Grafana: <code>http://localhost:3000</code> • Prometheus:
+              <code>http://localhost:9090</code>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-links">
+          <a href="./project-document.html">Project Document</a>
+          <a href="./project-document.md">Markdown Doc</a>
+          <a
+            href="https://github.com/<your-username>/payment-orchestrator"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub Repo</a
+          >
+        </div>
+        <p style="margin-top: 14px">
+          Built to showcase fintech backend engineering, system design thinking,
+          and production observability.
+        </p>
       </div>
-      <p style="margin-top: 14px;">Built to showcase fintech backend engineering, system design thinking, and production observability.</p>
-    </div>
-  </footer>
-</body>
+    </footer>
+  </body>
 </html>
