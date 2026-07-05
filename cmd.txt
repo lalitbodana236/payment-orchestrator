@@ -1,0 +1,25 @@
+Done — Grafana is now integrated into the project.
+What I added
+prometheus service in docker-compose.yml
+grafana service in docker-compose.yml
+Prometheus scrape config at monitoring/prometheus/prometheus.yml
+Grafana datasource provisioning at monitoring/grafana/provisioning/datasources/datasource.yml
+Grafana dashboard provisioning at monitoring/grafana/provisioning/dashboards/dashboard.yml
+Starter dashboard at monitoring/grafana/dashboards/payment-orchestrator-dashboard.json
+How to use it
+Start everything: docker compose up --build
+Prometheus: http://localhost:9090
+Grafana: http://localhost:3000
+Grafana login: admin / admin
+What the dashboard shows
+Payments Processed
+Retries
+Avg API Latency
+Payment Throughput
+Docs updated
+README.md
+docs/project-document.md
+If you want, I can next add:
+a nicer dashboard with provider-wise panels,
+alert rules,
+or a small “Monitoring” section in the README with screenshots guidance.

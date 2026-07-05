@@ -86,6 +86,8 @@ This starts:
 - `app` on `http://localhost:10005`
 - `mysql` on `localhost:3307`
 - `redis` on `localhost:6379`
+- `prometheus` on `localhost:9090`
+- `grafana` on `localhost:3000` with `admin` / `admin`
 
 Stop everything with:
 
@@ -136,6 +138,8 @@ You can inspect the custom metrics recorded by `PaymentMetricsRecorder` here:
 - Application metrics snapshot: `GET /api/v1/observability/metrics`
 - Actuator metrics: `GET /actuator/metrics`
 - Prometheus export: `GET /actuator/prometheus`
+- Prometheus UI: `http://localhost:9090`
+- Grafana UI: `http://localhost:3000`
 
 The application records metrics such as:
 
@@ -144,6 +148,8 @@ The application records metrics such as:
 - `payment.retry.total`
 
 These show request timing, payment outcomes, and retry activity by provider and failure reason.
+
+Grafana is pre-provisioned with the Prometheus datasource and a starter dashboard for payment throughput, retries, and average latency.
 
 ## Persistence Model
 

@@ -196,6 +196,8 @@ Metrics for latency, success, failures, and retries let you identify:
 - retry storms
 - abnormal duplicate-request patterns
 
+Grafana can visualize the Prometheus metrics live using the pre-provisioned dashboard in `monitoring/grafana/dashboards/payment-orchestrator-dashboard.json`.
+
 ### Practical production scaling notes
 
 For very high traffic, you would usually also add:
@@ -247,6 +249,8 @@ The custom metrics recorded by `PaymentMetricsRecorder` are visible in three pla
 - `GET /api/v1/observability/metrics` for a human-friendly snapshot
 - `GET /actuator/metrics` for Spring Boot actuator inspection
 - `GET /actuator/prometheus` for Prometheus scraping
+- `http://localhost:9090` for Prometheus UI
+- `http://localhost:3000` for Grafana UI
 
 The main custom metrics are:
 
