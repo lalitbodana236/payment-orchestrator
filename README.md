@@ -163,6 +163,29 @@ Grafana is pre-provisioned with the Prometheus datasource and a starter dashboar
 - Redis for idempotency locks and cached responses
 - Micrometer / Prometheus for metrics export
 - Resilience4j for circuit breaker support
+- Sandbox checkout pages and webhook simulation for interview demos
+
+## Sandbox Payment Flow
+
+Use the sandbox flow when you want to demonstrate a provider-hosted page without processing real money:
+
+1. `POST /api/v1/sandbox/payments` creates a pending payment and returns a hosted checkout URL.
+2. `GET /api/v1/sandbox/checkout/{paymentReference}` renders a provider-style checkout page.
+3. The checkout page posts to `POST /api/v1/sandbox/webhooks/payments/{paymentReference}` to mark the payment as `SUCCESS` or `FAILED`.
+
+This keeps the main orchestrator flow intact while adding a realistic checkout + webhook story for interviews.
+
+## AWS Deployment Shape
+
+For a production-style demo, deploy the backend on AWS behind an Application Load Balancer:
+
+- `GitHub Pages` hosts the public UI
+- `ALB` routes traffic to one or more backend instances
+- `EC2` or `ECS` runs the Spring Boot service
+- `RDS MySQL` stores payment state
+- `ElastiCache Redis` handles idempotency locks and cached responses
+
+The sandbox checkout and webhook flow works the same way after deployment, as long as the backend URL is public and allowed in `ALLOWED_ORIGINS`.
 
 ## Request and Response Fields
 

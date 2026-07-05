@@ -89,6 +89,14 @@ It is designed to look and behave like a real fintech backend rather than a thro
 - `ProviderPaymentRequest`: request sent to providers.
 - `ProviderPaymentResponse`: response returned by providers.
 
+### Sandbox / checkout layer
+
+- `SandboxController`: creates a pending payment, renders a hosted checkout page, and accepts webhook callbacks.
+- `SandboxPaymentService`: persists the sandbox payment, updates status from the webhook, and generates the hosted checkout HTML.
+- `SandboxCheckoutResponse`: returns the checkout URL and payment details for the sandbox flow.
+- `SandboxWebhookRequest`: payload sent from the hosted checkout page to simulate provider callbacks.
+- `SandboxPaymentOutcome`: defines the sandbox webhook outcomes (`SUCCESS` or `FAILED`).
+
 ### Orchestration layer
 
 - `PaymentService`: service contract used by the controller.
@@ -130,6 +138,14 @@ It is designed to look and behave like a real fintech backend rather than a thro
 10. If the primary provider fails, the orchestration layer falls back to the next provider in the route.
 11. On success, the entity is updated to `SUCCESS` and the response is cached for future duplicate requests.
 12. On repeated failure, the payment is marked `FAILED` and a structured error is returned.
+
+### Sandbox checkout flow
+
+1. Client calls `POST /api/v1/sandbox/payments`.
+2. The backend stores the payment as `PENDING` and returns a hosted checkout URL.
+3. `GET /api/v1/sandbox/checkout/{paymentReference}` renders a provider-style page.
+4. The page simulates success or failure and posts a webhook callback.
+5. The webhook updates the stored payment status to `SUCCESS` or `FAILED`.
 
 ### Fetch payment
 
