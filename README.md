@@ -251,4 +251,5 @@ This project is a fintech backend that focuses on correctness under retries, dup
 - Project document: `docs/project-document.html`
 - Markdown source: `docs/project-document.md`
 
-Enable GitHub Pages from the repository settings and publish the `docs/` folder.
+The workflow publishes the `docs/` folder to the `gh-pages` branch.
+In repository settings, set **Pages → Deploy from a branch → `gh-pages` / root**.
