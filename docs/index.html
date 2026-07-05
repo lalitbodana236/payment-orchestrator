@@ -6,7 +6,7 @@
     <title>Payment Orchestrator | Fintech Backend Showcase</title>
     <meta
       name="description"
-      content="A portfolio-ready payment orchestration backend that solves duplicate payments, provider failures, and scalable transaction processing."
+      content="A portfolio-ready payment orchestration backend that demonstrates idempotency, routing, concurrency, failover, and observability."
     />
     <link rel="stylesheet" href="./assets/site.css" />
     <script defer src="./assets/app.js"></script>
@@ -18,7 +18,7 @@
           <div class="brand-badge">PO</div>
           <div>
             <div>Payment Orchestrator</div>
-            <small style="color: var(--muted)">Fintech backend showcase</small>
+            <small class="muted">Fintech backend showcase</small>
           </div>
         </div>
         <nav class="nav">
@@ -38,9 +38,8 @@
             <div class="eyebrow">Spring Boot • Redis • MySQL • Grafana</div>
             <h1>Payment processing that stays correct under retries, duplicates, and provider outages.</h1>
             <p class="lead">
-              This project was built to show real backend thinking for fintech interviews: idempotency, provider routing,
-              automatic failover, durable persistence, and observability. It is designed to look like a production payment
-              service, not a toy CRUD app.
+              This project is built to look and behave like a production fintech service. It demonstrates idempotency,
+              provider routing, failover, observability, and concurrency handling in a way that works well in interviews.
             </p>
             <div class="cta-row">
               <a class="btn primary" href="#live-demo">Try the Demo</a>
@@ -50,15 +49,15 @@
           </div>
           <aside class="side-card metrics">
             <div class="metric">
-              <span style="color: var(--muted)">Problem solved</span>
+              <span class="muted">Problem solved</span>
               <strong>No duplicate charges and no provider lock-in</strong>
             </div>
             <div class="metric">
-              <span style="color: var(--muted)">System behavior</span>
+              <span class="muted">System behavior</span>
               <strong>Validate → route → retry → fail over → persist → observe</strong>
             </div>
             <div class="metric">
-              <span style="color: var(--muted)">Interview value</span>
+              <span class="muted">Interview value</span>
               <strong>Shows scale, correctness, resilience, and observability</strong>
             </div>
           </aside>
@@ -69,14 +68,14 @@
         <div class="container section-grid">
           <div class="section-card span-6">
             <h2>The problem</h2>
-            <p style="color: var(--muted); margin-top: 0">
+            <p class="muted" style="margin-top: 0">
               Payment systems often fail because of retries, provider downtime, duplicate requests, or inconsistent state.
               In fintech, a request must either finish correctly or fail safely without creating duplicate transactions.
             </p>
           </div>
           <div class="section-card span-6">
             <h2>The impact</h2>
-            <p style="color: var(--muted); margin-top: 0">
+            <p class="muted" style="margin-top: 0">
               This architecture reduces duplicate charges, preserves payment integrity during retries, and gives operators
               visibility into latency, failures, and retry storms.
             </p>
@@ -105,7 +104,7 @@
           </div>
           <div class="section-card span-5">
             <h2>Strong interview line</h2>
-            <p style="color: var(--muted); margin-top: 0">
+            <p class="muted" style="margin-top: 0">
               “I built a payment orchestration service that makes sure each payment is processed once, even if requests are
               retried, providers fail, or traffic spikes. The service stays stateless so it can scale horizontally.”
             </p>
@@ -117,62 +116,110 @@
         <div class="container section-grid">
           <div class="section-card span-12">
             <h2>Live demo</h2>
-            <p style="color: var(--muted); margin-top: 0">
-              Connect this page to your deployed backend URL on AWS EC2 or another host. The demo can then create payments
-              and show real API responses to interviewers.
+            <p class="muted" style="margin-top: 0">
+              Point this page at your AWS-hosted backend and use it as a real interviewer demo. You can run one API,
+              run the full flow, or send concurrent create-payment requests to show idempotency in action.
             </p>
-            <div class="grid-two" style="margin-top: 16px">
+
+            <div class="demo-intro-grid" style="margin-top: 16px">
               <div class="step">
-                <h3>API base URL</h3>
+                <h3>Backend URL</h3>
                 <input
                   id="apiBaseUrl"
                   type="url"
-                  placeholder="https://your-ec2-domain:10005"
-                  style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);"
+                  placeholder="https://your-ec2-or-load-balancer-domain:10005"
+                  class="form-control"
                 />
                 <div class="cta-row" style="margin-top: 14px">
                   <button class="btn primary" id="saveBaseUrl" type="button">Save URL</button>
                   <button class="btn" id="checkHealth" type="button">Check Health</button>
                 </div>
               </div>
+
               <div class="step">
-                <h3>Sample payment request</h3>
-                <div class="code" style="margin-top: 8px">POST /api/v1/payments</div>
-                <div style="color: var(--muted); margin-top: 8px">
-                  Headers: <code>Idempotency-Key</code>, <code>Content-Type: application/json</code>
-                </div>
+                <h3>Demo mode</h3>
+                <select id="demoMode" class="form-control">
+                  <option value="single" selected>Send one selected API request</option>
+                  <option value="all">Run all demo APIs</option>
+                </select>
+                <p class="muted small-copy">
+                  “All demo APIs” runs health, payment creation, payment lookup, metrics, and Prometheus endpoints in sequence.
+                </p>
               </div>
             </div>
 
-            <form id="paymentForm" class="grid-two" style="margin-top: 16px">
+            <form id="demoForm" class="demo-form-grid" style="margin-top: 16px">
+              <div class="step">
+                <h3>API</h3>
+                <select id="endpointType" class="form-control">
+                  <option value="health">GET /actuator/health</option>
+                  <option value="create-payment" selected>POST /api/v1/payments</option>
+                  <option value="get-payment">GET /api/v1/payments/{paymentReference}</option>
+                  <option value="metrics">GET /api/v1/observability/metrics</option>
+                  <option value="prometheus">GET /actuator/prometheus</option>
+                </select>
+              </div>
+
+              <div class="step">
+                <h3>Concurrent requests</h3>
+                <input id="concurrencyCount" type="number" min="1" max="25" value="5" class="form-control" />
+                <p class="muted small-copy">
+                  Use this with create-payment to fire multiple requests at once. Keep the same idempotency key to prove dedupe.
+                </p>
+              </div>
+
               <div class="step">
                 <h3>Amount</h3>
-                <input id="amount" type="number" step="0.01" min="0.01" value="120.50" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);" />
+                <input id="amount" type="number" step="0.01" min="0.01" value="120.50" class="form-control" />
               </div>
+
               <div class="step">
                 <h3>Currency</h3>
-                <input id="currency" type="text" value="USD" maxlength="3" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);" />
+                <input id="currency" type="text" value="USD" maxlength="3" class="form-control" />
               </div>
+
               <div class="step">
                 <h3>Payment method</h3>
-                <select id="paymentMethod" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);">
+                <select id="paymentMethod" class="form-control">
                   <option>DEBIT_CARD</option>
                   <option>CREDIT_CARD</option>
                   <option selected>UPI</option>
                   <option>NET_BANKING</option>
                 </select>
               </div>
+
+              <div class="step">
+                <h3>Payment reference</h3>
+                <select id="recentPaymentReference" class="form-control">
+                  <option value="">Recent payment references</option>
+                </select>
+                <input id="paymentReference" type="text" placeholder="Filled automatically after create-payment" class="form-control" />
+                <p class="muted small-copy">
+                  Use the dropdown to reuse a recent reference, or paste a payment reference manually for lookup.
+                </p>
+              </div>
+
               <div class="step">
                 <h3>Idempotency key</h3>
-                <input id="idempotencyKey" type="text" value="demo-key-001" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);" />
+                <input id="idempotencyKey" type="text" value="demo-key-001" class="form-control" />
               </div>
-              <div class="step" style="grid-column: span 2">
+
+              <div class="step">
+                <h3>Batch behavior</h3>
+                <select id="batchMode" class="form-control">
+                  <option value="same-key" selected>Same idempotency key</option>
+                  <option value="unique-keys">Unique idempotency keys</option>
+                </select>
+              </div>
+
+              <div class="step demo-actions">
                 <div class="cta-row">
-                  <button class="btn primary" type="submit">Send Payment</button>
+                  <button class="btn primary" type="submit">Send Request</button>
+                  <button class="btn" id="runConcurrent" type="button">Run Concurrent Batch</button>
                   <button class="btn" id="fillUuid" type="button">Generate New Key</button>
                 </div>
-                <div id="statusMessage" style="margin-top: 12px; color: var(--muted)"></div>
-                <pre id="responseBox" class="code" style="margin-top: 12px; min-height: 180px;">No response yet.</pre>
+                <div id="statusMessage" class="muted" style="margin-top: 12px"></div>
+                <pre id="responseBox" class="code" style="margin-top: 12px; min-height: 220px;">No response yet.</pre>
               </div>
             </form>
           </div>
@@ -201,7 +248,7 @@
         <div class="container section-grid">
           <div class="section-card span-12">
             <h2>Project document</h2>
-            <p style="color: var(--muted); margin-top: 0">
+            <p class="muted" style="margin-top: 0">
               The full class-by-class explanation, scaling discussion, and interview answers are in the document page.
             </p>
             <div class="cta-row">

@@ -64,6 +64,7 @@ Environment variables are optional because defaults are provided in `src/main/re
 - `DB_PASSWORD`
 - `REDIS_HOST`
 - `REDIS_PORT`
+- `ALLOWED_ORIGINS` for GitHub Pages and browser demo access
 
 ### Run Locally
 
@@ -253,3 +254,14 @@ This project is a fintech backend that focuses on correctness under retries, dup
 
 The workflow publishes the `docs/` folder to the `gh-pages` branch on every push to `main` or when run manually.
 In repository settings, set **Pages → Deploy from a branch → `gh-pages` / root**.
+
+### Browser Demo
+
+The GitHub Pages site at `docs/index.html` can talk to your AWS-hosted backend after you set the backend URL in the page.
+It supports:
+
+- Running one selected API
+- Running the full demo flow across health, create, lookup, metrics, and Prometheus endpoints
+- Sending concurrent create-payment requests to demonstrate idempotency
+
+For the live demo to work from a browser, make sure the backend allows the GitHub Pages origin through `ALLOWED_ORIGINS`.
