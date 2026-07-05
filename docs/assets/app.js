@@ -20,6 +20,8 @@ const elements = {
   recentPaymentReference: document.getElementById("recentPaymentReference"),
   createSandboxPayment: document.getElementById("createSandboxPayment"),
   openSandboxCheckout: document.getElementById("openSandboxCheckout"),
+  sandboxStatusBadge: document.getElementById("sandboxStatusBadge"),
+  sandboxCheckoutUrl: document.getElementById("sandboxCheckoutUrl"),
   idempotencyKey: document.getElementById("idempotencyKey"),
   batchMode: document.getElementById("batchMode"),
   demoForm: document.getElementById("demoForm"),
@@ -306,6 +308,14 @@ function renderSandboxUi() {
   elements.openSandboxCheckout.title = hasSandboxCheckout
     ? `Open ${state.sandboxPaymentReference || "sandbox payment"} checkout`
     : "Create a sandbox payment first";
+
+  elements.sandboxStatusBadge.textContent = hasSandboxCheckout
+    ? `Sandbox payment created: ${state.sandboxPaymentReference}`
+    : "No sandbox payment yet";
+
+  elements.sandboxCheckoutUrl.textContent = hasSandboxCheckout
+    ? state.sandboxCheckoutUrl
+    : "Checkout URL will appear here after you create a sandbox payment.";
 }
 
 function wireUi() {
