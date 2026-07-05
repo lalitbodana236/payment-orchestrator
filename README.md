@@ -230,6 +230,7 @@ Built a Spring Boot payment orchestration backend for fintech-style transaction 
 
 **Project:** Payment Orchestrator  
 **Repository:** `https://github.com/lalitbodana236/payment-orchestrator`
+**GitHub Pages:** `https://lalitbodana236.github.io/payment-orchestrator/`
 
 ### What it demonstrates
 
@@ -242,3 +243,12 @@ Built a Spring Boot payment orchestration backend for fintech-style transaction 
 ### Quick pitch
 
 This project is a fintech backend that focuses on correctness under retries, duplicate submissions, and provider failures. It shows how to design a stateless service that can scale horizontally while keeping payment processing safe and traceable.
+
+### Pages setup
+
+- Source folder: `docs/`
+- Home page: `docs/index.html`
+- Project document: `docs/project-document.html`
+- Markdown source: `docs/project-document.md`
+
+Enable GitHub Pages from the repository settings and publish the `docs/` folder.
