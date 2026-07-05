@@ -78,13 +78,14 @@ async function readResponse(response) {
 }
 
 async function fetchJson(path, options = {}) {
+  const { headers: optionHeaders = {}, ...requestOptions } = options;
   const response = await fetch(buildUrl(path), {
+    ...requestOptions,
     headers: {
       Accept: "application/json",
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {}),
+      ...(requestOptions.body ? { "Content-Type": "application/json" } : {}),
+      ...optionHeaders,
     },
-    ...options,
   });
   const body = await readResponse(response);
   if (!response.ok) {
