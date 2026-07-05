@@ -61,6 +61,11 @@ function getBaseUrl() {
   return baseUrl;
 }
 
+function getBaseUrlIfSet() {
+  const baseUrl = normalizeBaseUrl(elements.apiBaseUrl.value || state.baseUrl);
+  return baseUrl || "";
+}
+
 function buildUrl(path) {
   return `${getBaseUrl()}${path}`;
 }
@@ -124,8 +129,6 @@ function updateSandboxState(payload) {
   if (data && typeof data === "object") {
     if (data.paymentReference) {
       state.sandboxPaymentReference = data.paymentReference;
-      elements.paymentReference.value = data.paymentReference;
-      rememberPaymentReference(data.paymentReference);
     }
     if (data.checkoutUrl) {
       state.sandboxCheckoutUrl = data.checkoutUrl;
@@ -133,6 +136,18 @@ function updateSandboxState(payload) {
     saveState();
     renderSandboxUi();
   }
+}
+
+function getSelectedPaymentReference() {
+  const selectedReference =
+    elements.recentPaymentReference.value.trim() ||
+    elements.paymentReference.value.trim() ||
+    state.lastPaymentReference;
+  return selectedReference || "";
+}
+
+function getSandboxReference() {
+  return getSelectedPaymentReference() || state.sandboxPaymentReference || "";
 }
 
 function rememberPaymentReference(paymentReference) {
@@ -303,18 +318,24 @@ async function runConcurrentBatch() {
 }
 
 function renderSandboxUi() {
-  const hasSandboxCheckout = Boolean(state.sandboxCheckoutUrl);
+  const sandboxReference = getSandboxReference();
+  const baseUrl = getBaseUrlIfSet();
+  const sandboxCheckoutUrl = sandboxReference && baseUrl
+    ? `${baseUrl}/api/v1/sandbox/checkout/${encodeURIComponent(sandboxReference)}`
+    : "";
+  const hasSandboxCheckout = Boolean(sandboxCheckoutUrl);
+
   elements.openSandboxCheckout.disabled = !hasSandboxCheckout;
   elements.openSandboxCheckout.title = hasSandboxCheckout
-    ? `Open ${state.sandboxPaymentReference || "sandbox payment"} checkout`
+    ? `Open ${sandboxReference || "sandbox payment"} checkout`
     : "Create a sandbox payment first";
 
-  elements.sandboxStatusBadge.textContent = hasSandboxCheckout
+  elements.sandboxStatusBadge.textContent = state.sandboxPaymentReference
     ? `Sandbox payment created: ${state.sandboxPaymentReference}`
     : "No sandbox payment yet";
 
   elements.sandboxCheckoutUrl.textContent = hasSandboxCheckout
-    ? state.sandboxCheckoutUrl
+    ? sandboxCheckoutUrl
     : "Checkout URL will appear here after you create a sandbox payment.";
 }
 
@@ -370,12 +391,23 @@ function wireUi() {
   });
 
   elements.openSandboxCheckout.addEventListener("click", () => {
-    if (!state.sandboxCheckoutUrl) {
+    const sandboxReference = getSandboxReference();
+    if (!sandboxReference) {
       setStatus("Create a sandbox payment first.");
       return;
     }
-    window.open(state.sandboxCheckoutUrl, "_blank", "noopener,noreferrer");
-    setStatus(`Opened sandbox checkout for ${state.sandboxPaymentReference}.`);
+    let sandboxCheckoutUrl;
+    try {
+      sandboxCheckoutUrl = `${getBaseUrl()}/api/v1/sandbox/checkout/${encodeURIComponent(sandboxReference)}`;
+    } catch (error) {
+      setStatus(error.message);
+      return;
+    }
+    window.open(sandboxCheckoutUrl, "_blank", "noopener,noreferrer");
+    state.sandboxCheckoutUrl = sandboxCheckoutUrl;
+    saveState();
+    renderSandboxUi();
+    setStatus(`Opened sandbox checkout for ${sandboxReference}.`);
   });
 
   elements.demoForm.addEventListener("submit", async event => {
@@ -414,7 +446,10 @@ function wireUi() {
     if (elements.recentPaymentReference.value) {
       elements.paymentReference.value = elements.recentPaymentReference.value;
     }
+    renderSandboxUi();
   });
+
+  elements.paymentReference.addEventListener("input", renderSandboxUi);
 }
 
 wireUi();
