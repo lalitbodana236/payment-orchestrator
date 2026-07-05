@@ -48,6 +48,17 @@ public class PaymentController {
     public ApiResponse<PaymentResponse> createPayment(
             @Parameter(description = "Idempotency key used to deduplicate create requests", required = true)
             @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject("""
+                                    {
+                                      "amount": 120.50,
+                                      "currency": "USD",
+                                      "paymentMethod": "UPI"
+                                    }
+                                    """)))
             @Valid @RequestBody PaymentRequest request) {
         return new ApiResponse<>(CorrelationIdHolder.get().orElse("N/A"), Instant.now(),
                 paymentService.createPayment(idempotencyKey, request));

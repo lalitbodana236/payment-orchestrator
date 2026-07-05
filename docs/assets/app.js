@@ -21,6 +21,7 @@ const elements = {
   openSandboxCheckout: document.getElementById("openSandboxCheckout"),
   sandboxStatusBadge: document.getElementById("sandboxStatusBadge"),
   sandboxCheckoutUrl: document.getElementById("sandboxCheckoutUrl"),
+  requestPreview: document.getElementById("requestPreview"),
   idempotencyKey: document.getElementById("idempotencyKey"),
   batchMode: document.getElementById("batchMode"),
   demoForm: document.getElementById("demoForm"),
@@ -78,6 +79,66 @@ function paymentBody() {
     currency: elements.currency.value.trim().toUpperCase(),
     paymentMethod: elements.paymentMethod.value,
   };
+}
+
+function renderRequestPreview() {
+  const endpoint = elements.endpointType.value;
+  if (endpoint === "create-payment") {
+    const idempotencyKey = elements.idempotencyKey.value.trim() || "demo-key-001";
+    elements.requestPreview.textContent = [
+      "Method: POST",
+      "Path: /api/v1/payments",
+      "Headers:",
+      `  Idempotency-Key: ${idempotencyKey}`,
+      "  Content-Type: application/json",
+      "Body:",
+      JSON.stringify(paymentBody(), null, 2),
+    ].join("\n");
+    return;
+  }
+
+  if (endpoint === "get-payment") {
+    const paymentReference = getSelectedPaymentReference() || "{paymentReference}";
+    elements.requestPreview.textContent = [
+      "Method: GET",
+      `Path: /api/v1/payments/${paymentReference}`,
+      "Headers:",
+      "  Accept: application/json",
+    ].join("\n");
+    return;
+  }
+
+  if (endpoint === "health") {
+    elements.requestPreview.textContent = [
+      "Method: GET",
+      "Path: /actuator/health",
+      "Headers:",
+      "  Accept: application/json",
+    ].join("\n");
+    return;
+  }
+
+  if (endpoint === "metrics") {
+    elements.requestPreview.textContent = [
+      "Method: GET",
+      "Path: /api/v1/observability/metrics",
+      "Headers:",
+      "  Accept: application/json",
+    ].join("\n");
+    return;
+  }
+
+  if (endpoint === "prometheus") {
+    elements.requestPreview.textContent = [
+      "Method: GET",
+      "Path: /actuator/prometheus",
+      "Headers:",
+      "  Accept: text/plain",
+    ].join("\n");
+    return;
+  }
+
+  elements.requestPreview.textContent = "Request preview unavailable.";
 }
 
 async function readResponse(response) {
@@ -434,6 +495,7 @@ function wireUi() {
     elements.runConcurrent.disabled = endpoint !== "create-payment";
     elements.concurrencyCount.disabled = endpoint !== "create-payment";
     elements.batchMode.disabled = endpoint !== "create-payment";
+    renderRequestPreview();
   });
 
   elements.endpointType.dispatchEvent(new Event("change"));
@@ -442,9 +504,19 @@ function wireUi() {
       elements.paymentReference.value = elements.recentPaymentReference.value;
     }
     renderSandboxUi();
+    renderRequestPreview();
   });
 
-  elements.paymentReference.addEventListener("input", renderSandboxUi);
+  elements.paymentReference.addEventListener("input", () => {
+    renderSandboxUi();
+    renderRequestPreview();
+  });
+  elements.amount.addEventListener("input", renderRequestPreview);
+  elements.currency.addEventListener("input", renderRequestPreview);
+  elements.paymentMethod.addEventListener("change", renderRequestPreview);
+  elements.idempotencyKey.addEventListener("input", renderRequestPreview);
+
+  renderRequestPreview();
 }
 
 wireUi();
