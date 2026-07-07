@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Document | Payment Orchestrator</title>
+  <meta name="description" content="Detailed project document for the Payment Orchestrator portfolio project." />
+  <link rel="stylesheet" href="./assets/site.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="brand-badge">PD</div>
+        <div>
+          <div>Project Document</div>
+          <small style="color: var(--muted);">Interview-ready notes</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="./index.html">Home</a>
+        <a href="#summary">Summary</a>
+        <a href="#flow">Flow</a>
+        <a href="#scaling">Scaling</a>
+        <a href="#answers">Answers</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 34px 0 46px;">
+    <section class="section-card" id="summary">
+      <div class="eyebrow">Project document</div>
+      <h1 style="font-size: clamp(2rem, 4vw, 3.6rem); margin-top: 12px;">A fintech-style payment backend built to explain, defend, and showcase.</h1>
+      <p class="lead">
+        I built a Spring Boot payment orchestration service that accepts payment requests, routes them to the right provider,
+        protects against duplicates with idempotency, persists durable state in MySQL, and exposes Prometheus/Grafana observability.
+      </p>
+    </section>
+
+    <section class="section-grid" style="margin-top: 20px;">
+      <article class="section-card span-6">
+        <h2>Tech stack</h2>
+        <ul class="list">
+          <li>Java 21</li>
+          <li>Spring Boot</li>
+          <li>Spring Data JPA + Redis</li>
+          <li>Spring Retry + Resilience4j</li>
+          <li>Micrometer / Prometheus / Grafana</li>
+          <li>MySQL</li>
+          <li>OpenAPI / Swagger</li>
+        </ul>
+      </article>
+      <article class="section-card span-6">
+        <h2>Core design idea</h2>
+        <p style="color: var(--muted); margin-top: 0;">
+          The user chooses a payment method like debit card, credit card, UPI, or net banking. The backend chooses the provider,
+          retries transient failures, and falls back to a secondary provider if the primary one is down.
+        </p>
+      </article>
+    </section>
+
+    <section class="section-grid" style="margin-top: 20px;" id="flow">
+      <article class="section-card span-12">
+        <h2>End-to-end request flow</h2>
+        <div class="grid-two">
+          <div class="step"><h3>1. Client submits payment</h3><p>The request includes an idempotency key and payment method.</p></div>
+          <div class="step"><h3>2. Controller validates input</h3><p>Request validation ensures the API is safe before orchestration begins.</p></div>
+          <div class="step"><h3>3. Idempotency service checks Redis + DB</h3><p>It detects duplicate requests and reuses stored responses when needed.</p></div>
+          <div class="step"><h3>4. Routing strategy picks provider</h3><p>The first provider is selected based on the payment method.</p></div>
+          <div class="step"><h3>5. Provider executor applies retry + timeout</h3><p>Transient provider issues are retried automatically.</p></div>
+          <div class="step"><h3>6. Failover handles provider outage</h3><p>If the primary provider fails, the orchestration layer tries the fallback provider.</p></div>
+          <div class="step"><h3>7. Final state is saved</h3><p>The payment status, provider, and retry count are persisted in MySQL.</p></div>
+          <div class="step"><h3>8. Metrics are recorded</h3><p>Latency, retries, and outcomes are exposed through Micrometer and Prometheus.</p></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-grid" style="margin-top: 20px;">
+      <article class="section-card span-6">
+        <h2>How it scales</h2>
+        <ul class="list">
+          <li>API layer is stateless, so replicas can scale horizontally.</li>
+          <li>Redis handles fast duplicate detection and in-flight locks.</li>
+          <li>MySQL remains the durable source of truth.</li>
+          <li>Circuit breakers prevent one bad provider from hurting the whole service.</li>
+          <li>Prometheus/Grafana let you observe traffic, retries, and latency.</li>
+        </ul>
+      </article>
+      <article class="section-card span-6" id="answers">
+        <h2>Interview answers</h2>
+        <ul class="list">
+          <li><strong>Why idempotency?</strong> To prevent duplicate charges on retries.</li>
+          <li><strong>Why Redis?</strong> For low-latency locks and cached responses.</li>
+          <li><strong>Why MySQL?</strong> For durable payment state and auditability.</li>
+          <li><strong>Why failover?</strong> To continue processing when a provider is unavailable.</li>
+          <li><strong>Why Grafana?</strong> To see live payment throughput and retry patterns.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="section-card" style="margin-top: 20px;">
+      <h2>How to explain the impact</h2>
+      <p style="color: var(--muted); margin-top: 0;">
+        This project shows more than CRUD. It demonstrates the exact concerns that matter in fintech: correctness under retries,
+        safe provider switching, concurrency handling, observability, and a clean path to horizontal scaling.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment Orchestrator | Fintech Backend Showcase</title>
+    <meta
+      name="description"
+      content="A portfolio-ready payment orchestration backend that demonstrates idempotency, routing, concurrency, failover, and observability."
+    />
+    <link rel="stylesheet" href="./assets/site.css" />
+    <script defer src="./assets/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="brand-badge">PO</div>
+          <div>
+            <div>Payment Orchestrator</div>
+            <small class="muted">Fintech backend showcase</small>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="#problem">Problem</a>
+          <a href="#solution">Solution</a>
+          <a href="#live-demo">Live Demo</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#document">Document</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-card">
+            <div class="eyebrow">Spring Boot • Redis • MySQL • Grafana</div>
+            <h1>Payment processing that stays correct under retries, duplicates, and provider outages.</h1>
+            <p class="lead">
+              This project is built to look and behave like a production fintech service. It demonstrates idempotency,
+              provider routing, failover, observability, and concurrency handling in a way that works well in interviews.
+            </p>
+            <div class="cta-row">
+              <a class="btn primary" href="#live-demo">Try the Demo</a>
+              <a class="btn" href="./project-document.html">Read Project Document</a>
+              <a class="btn" href="https://github.com/lalitbodana236/Payment-Orchestrator" target="_blank" rel="noreferrer">GitHub Repo</a>
+            </div>
+          </div>
+          <aside class="side-card metrics">
+            <div class="metric">
+              <span class="muted">Problem solved</span>
+              <strong>No duplicate charges and no provider lock-in</strong>
+            </div>
+            <div class="metric">
+              <span class="muted">System behavior</span>
+              <strong>Validate → route → retry → fail over → persist → observe</strong>
+            </div>
+            <div class="metric">
+              <span class="muted">Interview value</span>
+              <strong>Shows scale, correctness, resilience, and observability</strong>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="problem">
+        <div class="container section-grid">
+          <div class="section-card span-6">
+            <h2>The problem</h2>
+            <p class="muted" style="margin-top: 0">
+              Payment systems often fail because of retries, provider downtime, duplicate requests, or inconsistent state.
+              In fintech, a request must either finish correctly or fail safely without creating duplicate transactions.
+            </p>
+          </div>
+          <div class="section-card span-6">
+            <h2>The impact</h2>
+            <p class="muted" style="margin-top: 0">
+              This architecture reduces duplicate charges, preserves payment integrity during retries, and gives operators
+              visibility into latency, failures, and retry storms.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="solution">
+        <div class="container section-grid">
+          <div class="section-card span-7">
+            <h2>How the solution works</h2>
+            <div class="pill-row">
+              <span class="pill">Idempotency</span>
+              <span class="pill">Routing</span>
+              <span class="pill">Retry</span>
+              <span class="pill">Failover</span>
+              <span class="pill">Persistence</span>
+              <span class="pill">Observability</span>
+            </div>
+            <ul class="list" style="margin-top: 18px">
+              <li>The user selects a payment method such as debit card, credit card, UPI, or net banking.</li>
+              <li>The backend chooses the primary provider automatically and hides provider internals.</li>
+              <li>If the primary provider fails, the orchestration layer retries and then fails over to a backup provider.</li>
+              <li>Payment state is stored in MySQL; duplicate request control uses Redis.</li>
+            </ul>
+          </div>
+          <div class="section-card span-5">
+            <h2>Strong interview line</h2>
+            <p class="muted" style="margin-top: 0">
+              “I built a payment orchestration service that makes sure each payment is processed once, even if requests are
+              retried, providers fail, or traffic spikes. The service stays stateless so it can scale horizontally.”
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="live-demo">
+        <div class="container section-grid">
+          <div class="section-card span-12">
+            <h2>Live demo</h2>
+            <p class="muted" style="margin-top: 0">
+              Point this page at your AWS-hosted backend and use it as a real interviewer demo. You can run one API,
+              run the full flow, or send concurrent create-payment requests to show idempotency in action.
+            </p>
+
+            <div class="demo-intro-grid" style="margin-top: 16px">
+              <div class="step">
+                <h3>Backend URL</h3>
+                <input
+                  id="apiBaseUrl"
+                  type="url"
+                  placeholder="https://your-ec2-or-load-balancer-domain:10005"
+                  class="form-control"
+                />
+                <div class="cta-row" style="margin-top: 14px">
+                  <button class="btn primary" id="saveBaseUrl" type="button">Save URL</button>
+                  <button class="btn" id="checkHealth" type="button">Check Health</button>
+                </div>
+              </div>
+
+              <div class="step">
+                <h3>Demo mode</h3>
+                <select id="demoMode" class="form-control">
+                  <option value="single" selected>Send one selected API request</option>
+                  <option value="all">Run all demo APIs</option>
+                </select>
+                <p class="muted small-copy">
+                  “All demo APIs” runs health, payment creation, payment lookup, metrics, and Prometheus endpoints in sequence.
+                </p>
+              </div>
+            </div>
+
+            <form id="demoForm" class="demo-form-grid" style="margin-top: 16px">
+              <div class="step">
+                <h3>API</h3>
+                <select id="endpointType" class="form-control">
+                  <option value="health">GET /actuator/health</option>
+                  <option value="create-payment" selected>POST /api/v1/payments</option>
+                  <option value="get-payment">GET /api/v1/payments/{paymentReference}</option>
+                  <option value="metrics">GET /api/v1/observability/metrics</option>
+                  <option value="prometheus">GET /actuator/prometheus</option>
+                </select>
+                <div id="requestPreview" class="code" style="margin-top: 12px; white-space: pre-wrap; min-height: 120px;">Request preview will appear here.</div>
+              </div>
+
+              <div class="step">
+                <h3>Concurrent requests</h3>
+                <input id="concurrencyCount" type="number" min="1" max="25" value="5" class="form-control" />
+                <p class="muted small-copy">
+                  Use this with create-payment to fire multiple requests at once. Keep the same idempotency key to prove dedupe.
+                </p>
+              </div>
+
+              <div class="step">
+                <h3>Amount</h3>
+                <input id="amount" type="number" step="0.01" min="0.01" value="120.50" class="form-control" />
+              </div>
+
+              <div class="step">
+                <h3>Currency</h3>
+                <input id="currency" type="text" value="USD" maxlength="3" class="form-control" />
+              </div>
+
+              <div class="step">
+                <h3>Payment method</h3>
+                <select id="paymentMethod" class="form-control">
+                  <option>DEBIT_CARD</option>
+                  <option>CREDIT_CARD</option>
+                  <option selected>UPI</option>
+                  <option>NET_BANKING</option>
+                </select>
+              </div>
+
+              <div class="step">
+                <h3>Payment reference</h3>
+                <select id="recentPaymentReference" class="form-control">
+                  <option value="">Recent payment references</option>
+                </select>
+                <input id="paymentReference" type="text" placeholder="Filled automatically after create-payment" class="form-control" />
+                <p class="muted small-copy">
+                  Use the dropdown to reuse a recent reference, or paste a payment reference manually for lookup.
+                </p>
+              </div>
+
+              <div class="step">
+                <h3>Sandbox checkout</h3>
+                <div id="sandboxStatusBadge" class="pill" style="display: inline-flex; margin-top: 8px;">No sandbox payment selected</div>
+                <div id="sandboxCheckoutUrl" class="code" style="margin-top: 12px; word-break: break-all;">Checkout URL will appear here after you create a sandbox payment.</div>
+                <div class="cta-row" style="margin-top: 8px">
+                  <button class="btn primary" id="createSandboxPayment" type="button">Start Sandbox Checkout</button>
+                  <button class="btn" id="openSandboxCheckout" type="button">Open Checkout Page</button>
+                </div>
+                <p class="muted small-copy">
+                  This reuses the selected payment reference and opens a hosted checkout page that can simulate success or failure.
+                </p>
+              </div>
+
+              <div class="step">
+                <h3>Idempotency key</h3>
+                <input id="idempotencyKey" type="text" value="demo-key-001" class="form-control" />
+              </div>
+
+              <div class="step">
+                <h3>Batch behavior</h3>
+                <select id="batchMode" class="form-control">
+                  <option value="same-key" selected>Same idempotency key</option>
+                  <option value="unique-keys">Unique idempotency keys</option>
+                </select>
+              </div>
+
+              <div class="step demo-actions">
+                <div class="cta-row">
+                  <button class="btn primary" type="submit">Send Request</button>
+                  <button class="btn" id="runConcurrent" type="button">Run Concurrent Batch</button>
+                  <button class="btn" id="fillUuid" type="button">Generate New Key</button>
+                </div>
+                <div id="statusMessage" class="muted" style="margin-top: 12px"></div>
+                <pre id="responseBox" class="code" style="margin-top: 12px; min-height: 220px;">No response yet.</pre>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container section-grid">
+          <div class="section-card span-6">
+            <h2>Architecture</h2>
+            <div class="code">Client → Controller → Orchestration Service → Routing Strategy → Provider Executor → Provider Connector → MySQL / Redis</div>
+          </div>
+          <div class="section-card span-6">
+            <h2>Request flow</h2>
+            <div class="grid-two">
+              <div class="step"><h3>1. Validate</h3><p>Checks request body and idempotency key.</p></div>
+              <div class="step"><h3>2. Route</h3><p>Selects the primary provider by payment method.</p></div>
+              <div class="step"><h3>3. Execute</h3><p>Retries transient failures and handles timeout.</p></div>
+              <div class="step"><h3>4. Persist</h3><p>Saves the final payment result and metrics.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="document">
+        <div class="container section-grid">
+          <div class="section-card span-12">
+            <h2>Project document</h2>
+            <p class="muted" style="margin-top: 0">
+              The full class-by-class explanation, scaling discussion, and interview answers are in the document page.
+            </p>
+            <div class="cta-row">
+              <a class="btn primary" href="./project-document.html">Open Project Document</a>
+              <a class="btn" href="./project-document.md" target="_blank" rel="noreferrer">Markdown Version</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-links">
+          <a href="./project-document.html">Project Document</a>
+          <a href="./project-document.md">Markdown Doc</a>
+          <a href="https://github.com/lalitbodana236/Payment-Orchestrator" target="_blank" rel="noreferrer">GitHub Repo</a>
+        </div>
+        <p style="margin-top: 14px">Built to showcase fintech backend engineering, system design thinking, and production observability.</p>
+      </div>
+    </footer>
+  </body>
+</html>
