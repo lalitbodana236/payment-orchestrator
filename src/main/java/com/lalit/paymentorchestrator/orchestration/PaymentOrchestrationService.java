@@ -3,51 +3,55 @@ package com.lalit.paymentorchestrator.orchestration;
 import com.lalit.paymentorchestrator.dto.PaymentRequest;
 import com.lalit.paymentorchestrator.dto.PaymentResponse;
 import com.lalit.paymentorchestrator.entity.PaymentEntity;
-import com.lalit.paymentorchestrator.enums.PaymentProviderType;
 import com.lalit.paymentorchestrator.enums.PaymentStatus;
 import com.lalit.paymentorchestrator.exception.PaymentNotFoundException;
-import com.lalit.paymentorchestrator.exception.PaymentProcessingException;
 import com.lalit.paymentorchestrator.idempotency.IdempotencyService;
 import com.lalit.paymentorchestrator.mapper.PaymentMapper;
 import com.lalit.paymentorchestrator.metrics.PaymentMetricsRecorder;
-import com.lalit.paymentorchestrator.provider.dto.ProviderPaymentResponse;
 import com.lalit.paymentorchestrator.repository.PaymentRepository;
-import com.lalit.paymentorchestrator.routing.PaymentRoute;
 import com.lalit.paymentorchestrator.routing.RoutingStrategy;
 import com.lalit.paymentorchestrator.service.PaymentService;
+import com.lalit.paymentorchestrator.service.PaymentAutoFinalizeService;
 import com.lalit.paymentorchestrator.util.PaymentReferenceGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.time.Instant;
 
 @Service
 public class PaymentOrchestrationService implements PaymentService {
 
-    private static final Logger log = LoggerFactory.getLogger(PaymentOrchestrationService.class);
-
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final RoutingStrategy routingStrategy;
-    private final ProviderExecutor providerExecutor;
     private final IdempotencyService idempotencyService;
     private final PaymentReferenceGenerator paymentReferenceGenerator;
     private final PaymentMetricsRecorder metricsRecorder;
+    private final PaymentAutoFinalizeService autoFinalizeService;
+    private final TaskScheduler taskScheduler;
+    private final long autoFinalizeDelayMs;
 
     public PaymentOrchestrationService(PaymentRepository paymentRepository,
                                        PaymentMapper paymentMapper,
                                        RoutingStrategy routingStrategy,
-                                       ProviderExecutor providerExecutor,
                                        IdempotencyService idempotencyService,
                                        PaymentReferenceGenerator paymentReferenceGenerator,
-                                       PaymentMetricsRecorder metricsRecorder) {
+                                       PaymentMetricsRecorder metricsRecorder,
+                                       PaymentAutoFinalizeService autoFinalizeService,
+                                       TaskScheduler taskScheduler,
+                                       @org.springframework.beans.factory.annotation.Value("${payment.orchestration.auto-finalize-delay-ms:30000}") long autoFinalizeDelayMs) {
         this.paymentRepository = paymentRepository;
         this.paymentMapper = paymentMapper;
         this.routingStrategy = routingStrategy;
-        this.providerExecutor = providerExecutor;
         this.idempotencyService = idempotencyService;
         this.paymentReferenceGenerator = paymentReferenceGenerator;
         this.metricsRecorder = metricsRecorder;
+        this.autoFinalizeService = autoFinalizeService;
+        this.taskScheduler = taskScheduler;
+        this.autoFinalizeDelayMs = autoFinalizeDelayMs;
     }
 
     @Override
@@ -86,49 +90,29 @@ public class PaymentOrchestrationService implements PaymentService {
                 .amount(request.amount())
                 .currency(request.currency())
                 .paymentMethod(request.paymentMethod())
-                .status(PaymentStatus.CREATED)
+                .provider(routingStrategy.route(request.paymentMethod()).primaryProvider())
+                .status(PaymentStatus.PENDING)
                 .retryCount(0)
                 .build();
 
-        paymentEntity = paymentRepository.save(paymentEntity);
-        PaymentRoute route = routingStrategy.route(request.paymentMethod());
-        paymentEntity.setStatus(PaymentStatus.PROCESSING);
-        paymentRepository.save(paymentEntity);
+        PaymentEntity saved = paymentRepository.save(paymentEntity);
+        scheduleAutoFinalize(saved.getPaymentReference());
+        return paymentMapper.toResponse(saved);
+    }
 
-        PaymentProcessingException lastFailure = null;
-        for (PaymentProviderType providerType : route.candidates()) {
-            if (providerType != route.primaryProvider()) {
-                paymentEntity.setStatus(PaymentStatus.RETRYING);
-                paymentRepository.save(paymentEntity);
-            }
-            try {
-                ProviderPaymentResponse providerResponse = providerExecutor.execute(paymentEntity, providerType);
-                paymentEntity.setProvider(providerResponse.provider());
-                paymentEntity.setStatus(providerResponse.status());
-                paymentEntity.setFailureReason(null);
-                paymentRepository.save(paymentEntity);
-                metricsRecorder.incrementPaymentOutcome("success", paymentEntity.getProvider());
-                return paymentMapper.toResponse(paymentEntity);
-            } catch (RuntimeException exception) {
-                lastFailure = new PaymentProcessingException(
-                        "Payment execution failed for provider " + providerType + " and payment " + paymentEntity.getPaymentReference(),
-                        exception
-                );
-                paymentEntity.setProvider(providerType);
-                paymentEntity.setFailureReason(exception.getMessage());
-                paymentRepository.save(paymentEntity);
-                metricsRecorder.incrementRetry(providerType.name(), exception.getClass().getSimpleName());
-                log.warn("Provider attempt failed. paymentReference={}, provider={}, reason={}",
-                        paymentEntity.getPaymentReference(), providerType, exception.getMessage());
-            }
+    private void scheduleAutoFinalize(String paymentReference) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            taskScheduler.schedule(() -> autoFinalizeService.finalizePayment(paymentReference),
+                    Instant.now().plusMillis(autoFinalizeDelayMs));
+            return;
         }
 
-        paymentEntity.setStatus(PaymentStatus.FAILED);
-        paymentRepository.save(paymentEntity);
-        metricsRecorder.incrementPaymentOutcome("failure", paymentEntity.getProvider());
-        if (lastFailure == null) {
-            throw new PaymentProcessingException("Payment processing failed", null);
-        }
-        throw lastFailure;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                taskScheduler.schedule(() -> autoFinalizeService.finalizePayment(paymentReference),
+                        Instant.now().plusMillis(autoFinalizeDelayMs));
+            }
+        });
     }
 }
